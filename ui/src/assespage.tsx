@@ -18,7 +18,7 @@ const DetailedAssessmentPage = () => {
     const fetchAssessmentData = async () => {
       try {
         console.log("assessment send?");
-        const response = await fetch(`http://localhost:8080/get-call/${callId}`); // Use the backend endpoint
+        const response = await fetch(`https://retell-bzoo69.vercel.app/get-call/${callId}`); // Use the backend endpoint
         if (!response.ok) {
           throw new Error("Failed to fetch assessment data");
         }
