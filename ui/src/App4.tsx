@@ -6,7 +6,7 @@ import { useLocation } from "react-router-dom";
 import avatarImage from "./assets/avatar.png";
 import ThankYouPage from "./ThankYouPage.tsx";
 
-const agentId = "agent_dfc93fde3e455a157b5a10f911";
+const agentId = process.env.REACT_APP_agentid;
 interface RegisterCallResponse {
   access_token: string;
   call_id: string;
