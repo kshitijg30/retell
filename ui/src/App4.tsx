@@ -94,7 +94,7 @@ const App = () => {
     gender: string
   ): Promise<RegisterCallResponse> {
     try {
-      const response = await fetch("http://localhost:8080/create-web-call", {
+      const response = await fetch("https://retell-bzoo69.vercel.app/create-web-call", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
