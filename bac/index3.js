@@ -5,7 +5,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const app = express();
 const port = 8080;
-
+const api_k = process.env.REACT_APP_apik;
 const genAI = new GoogleGenerativeAI('AIzaSyAy3PmWVHdIBJc08IcY45SnLoABX-Jg_E8');
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -32,7 +32,7 @@ app.post('/create-web-call', async (req, res) => {
             payload,
             {
                 headers: {
-                    'Authorization': 'Bearer key_d193d28697d9c6f8dbc865024a0b', // Replace with your actual Bearer token
+                    'Authorization': 'Bearer ${api_k}', // Replace with your actual Bearer token
                     'Content-Type': 'application/json',
                 },
             }
