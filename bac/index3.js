@@ -10,6 +10,7 @@ const port = 8080;
 const genAI = new GoogleGenerativeAI('AIzaSyAy3PmWVHdIBJc08IcY45SnLoABX-Jg_E8');
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 const api_key = process.env.REACT_APP_api_key
+console.log(api_key);
 app.use(cors());
 app.use(express.json());
 app.post('/create-web-call', async (req, res) => {
