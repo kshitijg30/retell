@@ -1,14 +1,15 @@
 const express = require('express');
 const axios = require('axios');
+require('dotenv').config();
 const cors = require('cors');
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const app = express();
 const port = 8080;
-const api_k ="key_d3a9257ab92867a971d9edbcfdbf";
+
 const genAI = new GoogleGenerativeAI('AIzaSyAy3PmWVHdIBJc08IcY45SnLoABX-Jg_E8');
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
+const api_key = process.env.REACT_APP_api_key
 app.use(cors());
 app.use(express.json());
 app.post('/create-web-call', async (req, res) => {
@@ -32,7 +33,7 @@ app.post('/create-web-call', async (req, res) => {
             payload,
             {
                 headers: {
-                    'Authorization': 'Bearer key_d3a9257ab92867a971d9edbcfdbf', // Replace with your actual Bearer token
+                    'Authorization': `Bearer ${api_key}`, // Replace with your actual Bearer token
                     'Content-Type': 'application/json',
                 },
             }
@@ -57,7 +58,7 @@ app.get('/get-call/:callId', async (req, res) => {
             `https://api.retellai.com/v2/get-call/${callId}`,
             {
                 headers: {
-                    'Authorization': 'Bearer key_d193d28697d9c6f8dbc865024a0b',
+                    'Authorization': `Bearer ${api_key}`,
                     'Content-Type': 'application/json',
                 },
             }
@@ -69,17 +70,16 @@ app.get('/get-call/:callId', async (req, res) => {
         if (!transcript) {
             return res.status(400).json({ error: 'Transcript not found in the call data' });
         }
+        const summary = report.custom_analysis_data['_assessment summary'];
+       
+        //console.log(summary);
+        // const complaintsPrompt = `The following text is a medical summary ${summary} of the patient. You have to find chief complaints in bullet points from the conversation.`;
+        // const complaintsResponse = await model.generateContent([complaintsPrompt]);
+        const complaints = report.custom_analysis_data['_chief _complaints'];
 
         // Process transcript directly using the generative model
-        const summaryPrompt = `The following text is a medical transcript: ${transcript} between patient and AI doctor. You have to summarize the transcription and give an assessment summary.`;
-        const summaryResponse = await model.generateContent([summaryPrompt]);
-        const summary = summaryResponse.response.text();
-        console.log(summary);
-        const complaintsPrompt = `The following text is a medical summary ${summary} of the patient. You have to find chief complaints in bullet points from the conversation.`;
-        const complaintsResponse = await model.generateContent([complaintsPrompt]);
-        const complaints = complaintsResponse.response.text();
-        console.log(complaints);
-        const prescriptionsPrompt = `The following text is a medical summary ${summary} of the patient. You have to prescribe medicines based on the summary.`;
+
+        const prescriptionsPrompt = `The following text is a medical summary ${summary} of the patient. You have to prescribe medicines based on the summary. You have to prescribe medicines at any cost, you can use all medical data available on the web.`;
         const prescriptionsResponse = await model.generateContent([prescriptionsPrompt]);
         const prescriptions = prescriptionsResponse.response.text();
         console.log(prescriptions);
