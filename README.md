@@ -32,3 +32,6 @@ Step 2: Step up frontend
 3. In `App.tsx`, replace ENTER_YOUR_AGENT_ID with your agent ID
 
 4. `npm run start`
+
+#### TO DO: 
+1. She is speaking, but behaving like male.
