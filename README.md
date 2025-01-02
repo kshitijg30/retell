@@ -35,3 +35,4 @@ Step 2: Step up frontend
 
 #### TO DO: 
 1. She is speaking, but behaving like male.
+2. Name, age, gender, locality, maritial status, name of doctor, date 
