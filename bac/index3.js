@@ -72,10 +72,10 @@ app.get('/get-call/:callId', async (req, res) => {
         if (!transcript) {
             return res.status(400).json({ error: 'Transcript not found in the call data' });
         }
+        console.log(response.data);
         console.log(response.data.call_analysis);
         console.log(response.data.call_analysis['custom_analysis_data'])
         console.log(response.data.call_analysis.custom_analysis_data);
-        console.log();
 
         //const summary = response.data.call_analysis.custom_analysis_data['summary'];
         const  summary = response.data.call_analysis['custom_analysis_data']['summary'];
