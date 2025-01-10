@@ -4,8 +4,8 @@ import './index.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import UserForm from './user.tsx';
 import App from './App5.tsx';
-import ThankYouPage from './ThankYouPage.tsx';
-import DetailedAssessmentPage from "./assespage.tsx";
+import ThankYouPage from './tnx.jsx';
+import DetailedAssessmentPage from "./assp.jsx";
 ReactDOM.render(
   <React.StrictMode>
    <Router>
