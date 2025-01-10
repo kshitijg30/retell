@@ -10,7 +10,7 @@ const port = 8080;
 const genAI = new GoogleGenerativeAI('AIzaSyAy3PmWVHdIBJc08IcY45SnLoABX-Jg_E8');
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 //const api_key = process.env.api_key;
-const api_key = 'key_7c37d253e122b8fdfd1813d295b7';
+const api_key = 'key_fdc58d14f12415e7017066e0a5fc';
 // console.log(api_key);
 app.use(cors());
 app.use(express.json());
