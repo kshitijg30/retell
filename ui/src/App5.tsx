@@ -14,7 +14,7 @@ interface RegisterCallResponse {
 const retellWebClient = new RetellWebClient();
 
 const ChatPage: React.FC = () => {
-  const agentId = process.env.REACT_APP_agentid;
+  const agentId = 'agent_389efc22e52f4145dc7eca35e2';
   const url = process.env.REACT_APP_url;
   
   const [conversationStatus, setConversationStatus] = useState("Initializing...");
