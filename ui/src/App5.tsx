@@ -1,185 +1,176 @@
-import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
-import { Plus, X } from 'lucide-react';
+import React, { useEffect, useState, useRef } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { RetellWebClient } from "retell-client-js-sdk";
 import Lottie from 'lottie-react';
 import listeningAnimation from './assets/l.json';
-import bgImage from './assets/a1.png';
 import logo from './assets/avatar.png';
-import './dash.css';
+import './chat.css';
 
-const Card = ({ children, className = '' }) => (
-  <div className={`card ${className}`}>
-    {children}
-  </div>
-);
+interface RegisterCallResponse {
+  access_token: string;
+  call_id: string;
+}
 
-const CardHeader = ({ children }) => (
-  <div className="card-header">{children}</div>
-);
+const retellWebClient = new RetellWebClient();
 
-const CardTitle = ({ children }) => (
-  <h3 className="card-title">{children}</h3>
-);
-
-const CardContent = ({ children, className = '' }) => (
-  <div className={`card-content ${className}`}>{children}</div>
-);
-
-const DetailedAssessmentPage = () => {
-  const location = useLocation();
-  const { callId } = location.state || {};
-  const [assessmentData, setAssessmentData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const ChatPage: React.FC = () => {
+  const agentId = process.env.REACT_APP_agentid;
   const url = process.env.REACT_APP_url;
+  
+  const [conversationStatus, setConversationStatus] = useState("Initializing...");
+  const [waveAnimating, setWaveAnimating] = useState(false);
+  const [transcript, setTranscript] = useState<string[]>([]);
+  const currentCallIdRef = useRef<string | null>(null);
+  
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  const { name, age, gender } = location.state || { name: "aman", age: "20", gender: "male" };
+
+  async function registerCall(
+    agentId: string,
+    user_name: string,
+    age: string,
+    gender: string
+  ): Promise<RegisterCallResponse> {
+    try {
+      const response = await fetch(`${url}/create-web-call`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          agent_id: agentId,
+          retell_llm_dynamic_variables: { user_name, age, gender },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (err) {
+      console.error("Error during call registration:", err);
+      throw new Error("Failed to register call");
+    }
+  }
 
   useEffect(() => {
-    if (!callId) {
-      setError("Call ID is missing");
-      setLoading(false);
-      return;
-    }
-
-    const fetchAssessmentData = async () => {
+    const initializeCall = async () => {
       try {
-        const response = await fetch(`${url}/get-call/${callId}`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch assessment data");
+        const registerCallResponse = await registerCall(agentId, name, age, gender);
+        if (registerCallResponse.access_token) {
+          console.log("Call Registered:", registerCallResponse);
+          currentCallIdRef.current = registerCallResponse.call_id;
+          console.log("callid set", registerCallResponse.call_id);
+          await retellWebClient.startCall({
+            accessToken: registerCallResponse.access_token,
+          });
+          setConversationStatus("Active");
         }
-
-        const data = await response.json();
-        setAssessmentData(data);
-      } catch (error) {
-        setError(error.message);
-      } finally {
-        setLoading(false);
+      } catch (err) {
+        console.error("Error during call initialization:", err);
+        setConversationStatus("Connection Failed");
       }
     };
 
-    fetchAssessmentData();
-  }, [callId, url]);
+    initializeCall();
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-lg text-primary">Loading assessment data...</div>
-      </div>
-    );
-  }
+    retellWebClient.on("call_started", () => {
+      console.log("Call started");
+      setConversationStatus("Active");
+      setWaveAnimating(true);
+    });
 
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-lg text-red-500">Error: {error}</div>
-      </div>
-    );
-  }
+    retellWebClient.on("call_ended", async () => {
+      console.log("Call ended");
+      setConversationStatus("Completed");
+      setWaveAnimating(false);
+      const currentCallId = currentCallIdRef.current;
+      console.log(currentCallId);
+      setTimeout(() => {
+        navigate("/thank-you", { state: { callId: currentCallId } });
+      }, 2000);
+    });
 
-  if (!assessmentData) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="text-lg text-secondary">No assessment data available.</div>
-      </div>
-    );
-  }
+    retellWebClient.on("agent_start_talking", () => setWaveAnimating(true));
+    retellWebClient.on("agent_stop_talking", () => setWaveAnimating(false));
 
-  const ItemList = ({ title, items }) => (
-    <Card className="col-span-1">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {items && (
-          <div className="item-row">
-            <div className="item-dot"></div>
-            <span className="text-content">{items}</span>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+    retellWebClient.on("update", (update) => {
+      const lastKey = Object.keys(update.transcript).pop();
+      if (update.transcript && update.transcript[lastKey].role === "agent") {
+        setTranscript((prev) => [update.transcript[lastKey].content]);
+      }
+    });
+
+    retellWebClient.on("error", (error) => {
+      console.error("An error occurred:", error);
+      setConversationStatus("Error");
+      retellWebClient.stopCall();
+    });
+
+    return () => {
+      retellWebClient.stopCall();
+    };
+  }, [name, age, gender, navigate, agentId, url]);
 
   return (
-    <div className="bg-gray-100">
-      {/* Background Image */}
-      <img 
-        src={bgImage} 
-        alt="" 
-        className="background-image"
-        loading="eager"
-      />
-
-      {/* Logo section */}
-      <div className="logo-container">
-        <img 
-          src={logo} 
-          alt="Ultra Care Logo" 
-          className="logo-image"
-        />
-      </div>
-
-      <div className="header">
-        <div className="flex justify-between items-center max-w-7xl mx-auto">
-          <div className="flex items-center gap-3">
-            <img src="/ultracare-logo.png" alt="Ultra Care Logo" className="h-10" />
-            <span className="text-primary font-bold text-xl">ULTRA CARE</span>
+    <div className="chat-container">
+      <div className="top-bar">
+        <div className="logo-container">
+          <img src={logo} alt="Ultra Care Logo" className="logo-image" />
+        </div>
+        <div className="user-info">
+          <div className="user-detail">
+            <span className="detail-label">Name:</span>
+            <span className="detail-value">{name}</span>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="text-secondary">Ambani | 54 years, male</span>
-            <button className="btn-print">Print Report</button>
+          <div className="user-detail">
+            <span className="detail-label">Age:</span>
+            <span className="detail-value">{age}</span>
+          </div>
+          <div className="user-detail">
+            <span className="detail-label">Gender:</span>
+            <span className="detail-value">{gender}</span>
           </div>
         </div>
       </div>
 
-      <div className="grid-layout max-w-7xl mx-auto">
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Assessment Summary</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-content">
-              {assessmentData.summary}
-            </p>
-          </CardContent>
-        </Card>
+      <div className="chat-card fade-in">
+        <div className="status-bar">
+          <div className={`status-indicator ${conversationStatus.toLowerCase()}`}></div>
+          <span className="status-text">Conversation Status: {conversationStatus}</span>
+        </div>
 
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Prescriptions</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="item-row">
-              <div className="item-dot"></div>
-              <span className="text-content">{assessmentData.prescriptions}</span>
+        {transcript.length > 0 && (
+          <div className="transcript-section">
+            <div className="transcript-content">
+              {transcript.map((text, index) => (
+                <div key={index} className="message-bubble">
+                  <div className="message-header">
+                    <span className="agent-name">AI Assistant</span>
+                    <span className="message-time">{new Date().toLocaleTimeString()}</span>
+                  </div>
+                  <p className="message-text">{text}</p>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-1">
-          <CardHeader>
-            <CardTitle>Advice</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="item-row">
-              <div className="item-dot"></div>
-              <span className="text-content">{assessmentData.advice}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <ItemList title="Chief Complaints" items={assessmentData.chiefComplaints} />
+          </div>
+        )}
       </div>
 
-      <div className="lottie-background">
+      <div className="lottie-container">
         <Lottie 
           animationData={listeningAnimation}
           loop={true}
           autoplay={true}
           className="lottie-animation"
+          style={{ width: '100%', height: '100%' }}
         />
       </div>
     </div>
   );
 };
 
-export default DetailedAssessmentPage;
+export default ChatPage;
