@@ -9,7 +9,6 @@ const port = 8080;
 
 const genAI = new GoogleGenerativeAI('AIzaSyAy3PmWVHdIBJc08IcY45SnLoABX-Jg_E8');
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-//const api_key = process.env.api_key;
 const api_key = 'key_fdc58d14f12415e7017066e0a5fc';
 // console.log(api_key);
 app.use(cors());
@@ -72,10 +71,10 @@ app.get('/get-call/:callId', async (req, res) => {
         if (!transcript) {
             return res.status(400).json({ error: 'Transcript not found in the call data' });
         }
-        console.log(response.data);
         console.log(response.data.call_analysis);
         console.log(response.data.call_analysis['custom_analysis_data'])
         console.log(response.data.call_analysis.custom_analysis_data);
+        console.log();
 
         //const summary = response.data.call_analysis.custom_analysis_data['summary'];
         const  summary = response.data.call_analysis['custom_analysis_data']['summary'];
