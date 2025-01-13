@@ -11,7 +11,11 @@ const genAI = new GoogleGenerativeAI('AIzaSyAy3PmWVHdIBJc08IcY45SnLoABX-Jg_E8');
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 const api_key ='key_d93c13966542366a381c5f68e977';
 
-app.use(cors());
+app.use(cors({
+    origin: '*', // Replace '*' with a specific origin if needed
+    methods: 'GET,POST,OPTIONS',
+    allowedHeaders: 'Content-Type,Authorization',
+}));
 app.use(express.json());
 
 app.post('/create-web-call', async (req, res) => {
