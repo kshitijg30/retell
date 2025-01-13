@@ -9,17 +9,16 @@ const port = 8080;
 
 const genAI = new GoogleGenerativeAI('AIzaSyAy3PmWVHdIBJc08IcY45SnLoABX-Jg_E8');
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-const api_key = 'key_fdc58d14f12415e7017066e0a5fc';
-// console.log(api_key);
+const api_key ='key_d93c13966542366a381c5f68e977';
+
 app.use(cors());
 app.use(express.json());
+
 app.post('/create-web-call', async (req, res) => {
     const { agent_id, metadata, retell_llm_dynamic_variables } = req.body;
     console.log(retell_llm_dynamic_variables);
-    // Prepare the payload for the API request
     const payload = { agent_id };
 
-    // Conditionally add optional fields if they are provided
     if (metadata) {
         payload.metadata = metadata;
     }
@@ -34,14 +33,12 @@ app.post('/create-web-call', async (req, res) => {
             payload,
             {
                 headers: {
-                    'Authorization': `Bearer ${api_key}`, // Replace with your actual Bearer token
+                    'Authorization': `Bearer ${api_key}`,
                     'Content-Type': 'application/json',
                 },
             }
         );
-     //   console.log(response.data);
         const { call_id } = response.data.call_id; 
-    
         res.status(201).json(response.data);
     } catch (error) {
         console.error('Error creating web call:', error.response?.data || error.message);
@@ -49,11 +46,10 @@ app.post('/create-web-call', async (req, res) => {
     }
 });
 
-
 app.get('/get-call/:callId', async (req, res) => {
     const { callId } = req.params;
-    console.log("here?");
-    console.log(callId);
+    console.log("Processing call ID:", callId);
+    
     try {
         const response = await axios.get(
             `https://api.retellai.com/v2/get-call/${callId}`,
@@ -64,153 +60,107 @@ app.get('/get-call/:callId', async (req, res) => {
                 },
             }
         );
-        console.log("get call called");
-        console.log(callId);
+
         const transcript = response.data.transcript;
-        //console.log(transcript);
         if (!transcript) {
             return res.status(400).json({ error: 'Transcript not found in the call data' });
         }
-        console.log(response.data.call_analysis);
-        console.log(response.data.call_analysis['custom_analysis_data'])
-        console.log(response.data.call_analysis.custom_analysis_data);
-        console.log();
 
-        //const summary = response.data.call_analysis.custom_analysis_data['summary'];
-        const  summary = response.data.call_analysis['custom_analysis_data']['summary'];
-        //console.log(response.data.call_analysis.custom_analysis_data);
-        //console.log(summary);
-        // const complaintsPrompt = `The following text is a medical summary ${summary} of the patient. You have to find chief complaints in bullet points from the conversation.`;
-        // const complaintsResponse = await model.generateContent([complaintsPrompt]);
-      //  const complaints = response.call_analysis.custom_analysis_data['complaints'];
-        const complaints =  response.data.call_analysis['custom_analysis_data']['complaints'];
-        // Process transcript directly using the generative model
-        // const summaryPrompt = `The following text is a medical transcript: ${transcript} between patient and AI doctor. You have to summarize the transcription and give an assessment summary.`;
-        // const summaryResponse = await model.generateContent([summaryPrompt]);
-        // const summary = summaryResponse.response.text();
-        // console.log(summary);
-        // const complaintsPrompt = `The following text is a medical summary ${summary} of the patient. You have to find chief complaints in bullet points from the conversation.`;
-        // const complaintsResponse = await model.generateContent([complaintsPrompt]);
-        // const complaints = complaintsResponse.response.text();
-        console.log(complaints);
-        const prescriptionsPrompt = `The following text is a medical conversations between ai agent (doctor) and a patient (user) ${transcript} . You are tasked with analyzing the transcript between an AI agent and a patient. Based on the transcript, provide a list of medications and tests recommended for the patient, along with detailed instructions for medication use, potential interactions, contraindications, and follow-up guidance. Your response must adhere to the structure below.
+        // Get summary and complaints from custom analysis data
+        const summary = response.data.call_analysis.custom_analysis_data.summary;
+        const complaintsRaw = response.data.call_analysis.custom_analysis_data.complaints;
+        
+        // Convert complaints to array and split by ||
+        const complaints = Array.isArray(complaintsRaw) 
+            ? complaintsRaw.flatMap(complaint => complaint.split('||').map(item => item.trim()))
+            : complaintsRaw
+                ? complaintsRaw.split('||').map(item => item.trim())
+                : [];
 
-Output Structure
-I. Medications
-For each medication, provide the following details:
+        console.log('Processed complaints:', complaints);
 
-Medication Name
-Dosage Form
-Strength
-Quantity
-Route of Administration
-Frequency of Administration
-Duration of Treatment
-II. Tests
-List all recommended tests based on the patient's symptoms or concerns.
+        // Generate additional advice using the model
+    //     const dietPrompt = `Based on this medical summary : "${summary}", provide evidence-based dietary recommendations tailored to the patient's condition. Return diet advice based on the patient's condition. You strictly have to provide advice, do not respond with i cant provide advice or anything. Include considerations for comorbidities, nutritional deficiencies, and specific dietary restrictions. Provide recommendations in the following format: Each recommendation separated by '||'. Do not include any other text, numbers, or bullet points.`;
 
-III. Instructions for Use
-Provide clear guidance for each medication:
+    // const dietResponse = await model.generateContent([dietPrompt]);
+    // const dietAdviceRaw = dietResponse.response.text();
+    // const dietAdvice = dietAdviceRaw.split('||').map(item => item.trim()).filter(item => item);
+    // console.log(dietAdvice);
+    // const lifestylePrompt = `Based on this medical conversation transcript: "${transcript}", provide evidence-based lifestyle modifications tailored to the patient's condition. Use principles from "The Art of Prescribing" to address factors such as daily routines, comorbidities, and age. Return recommendations in the following format: Each recommendation separated by '||'. Do not include any other text, numbers, or bullet points.`;
 
-How to Take the Medication
-With or without food
-Time of day
-Specific instructions (e.g., swallow whole, chewable, dissolve in water)
-Special Precautions
-Avoid certain foods, beverages, or activities
-Take with plenty of water
-Avoid alcohol or other medications
-Storage instructions (e.g., store in a cool, dry place)
-What to Do if a Dose is Missed
-Timing of the missed dose
-Whether to skip the missed dose or take it as soon as remembered
-Instructions if multiple doses are missed
-IV. Interactions and Contraindications
-Known Drug Interactions
-Specific medications to avoid
-Potential interactions with over-the-counter drugs or supplements
-Contraindications
-Conditions or situations in which the medication should not be used
-Pre-existing medical conditions that may increase the risk of adverse effects
-V. Refills and Follow-up
-Number of Refills Authorized
-Frequency of Follow-up Appointments
-Instructions for Monitoring Effectiveness and Side Effects
-Contact Information for Any Questions or Concerns
-Recommended Resources for Creating a Medication Prescription
-If you are looking to create a Medication Prescription, I would recommend these three books and here is exactly why.
+    // const lifestyleResponse = await model.generateContent([lifestylePrompt]);
+    // const lifestyleAdviceRaw = lifestyleResponse.response.text();
+    // const lifestyleAdvice = lifestyleAdviceRaw.split('||').map(item => item.trim()).filter(item => item);
+    // console.log(lifestyleAdvice);
+    // const medicationsPrompt = `Based on this medical conversation transcript: "${transcript}", list all medications prescribed or discussed in the following structured format: Medication Name || Dosage Form || Strength || Quantity || Route of Administration || Frequency of Administration || Duration of Treatment. Use references from "The Complete Guide to Prescription and Nonprescription Drugs" and "The Sanford Guide to Antimicrobial Therapy" to ensure the medications include accurate details. Provide the list in the specified format, separated by '||'. Do not include any other text, numbers, or bullet points.`;
 
-The Complete Guide to Prescription and Nonprescription Drugs by H. Winter Griffith: This book provides comprehensive information on prescription and nonprescription drugs, making it an essential reference for physicians. It includes indications, dosages, side effects, and drug interactions, allowing physicians to make informed decisions when selecting medications. The book also offers guidance on selecting the appropriate medication based on the patient's condition and medical history, ensuring personalized treatment plans. Additionally, it includes clear instructions on dosage administration, frequency, and duration of treatment, helping physicians prescribe medications accurately. The book highlights important precautions and warnings to ensure safe medication use, promoting patient safety. Moreover, it follows medical guidelines and provides evidence-based information to support accurate and appropriate treatment.
-The Sanford Guide to Antimicrobial Therapy by David N. Gilbert: Antibiotic prescribing is a crucial aspect of medical practice, and this book focuses specifically on antimicrobial therapy. It provides up-to-date information on the selection, dosing, and administration of antibiotics, ensuring physicians have the latest knowledge in this field. The book offers guidance on appropriate antibiotic choices based on the type of infection, patient characteristics, and local resistance patterns, enabling physicians to make informed decisions. It includes detailed dosing recommendations for different patient populations, such as children, pregnant women, and patients with renal impairment, ensuring optimal antibiotic use. The book also emphasizes the importance of antibiotic stewardship and the prevention of antibiotic resistance, promoting responsible prescribing practices. With concise and practical information, this book supports accurate and effective antibiotic prescribing.
-The Art of Prescribing by Nicholas H. G. Holford: Prescribing medications is a complex task that requires careful consideration of various factors. This book explores the principles and strategies of prescribing medications, providing valuable insights for physicians. It discusses the importance of considering patient factors, such as age, weight, renal and hepatic function, and comorbidities, when prescribing medications, ensuring personalized treatment plans. The book also provides insights into pharmacokinetics and pharmacodynamics, optimizing drug selection and dosing for individual patients. It emphasizes the need for ongoing monitoring and adjustment of medication regimens based on patient response and therapeutic goals, promoting patient safety and efficacy. With practical tips and frameworks, this book enhances prescribing skills and improves patient outcomes.
-In conclusion, these three books are highly relevant for physicians creating medication prescriptions. They provide comprehensive information on drugs, offer guidance on appropriate medication choices, highlight precautions and warnings, and emphasize the importance of personalized treatment plans and ongoing monitoring. By utilizing these references, physicians can enhance their prescribing skills and ensure accurate and effective medication prescriptions.
-Key Terms
-Dosage: The prescribed amount of medication to be taken at a given time, usually expressed in milligrams or milliliters.
-Frequency: The number of times a medication should be taken within a specified period, such as daily, twice daily, or every four hours.
-Route of Administration: The method by which a medication is delivered into the body, such as orally, topically, or intravenously.
-Duration: The length of time for which a medication should be taken, specified in days, weeks, or months.
-Contraindications: Specific conditions or factors that make a particular medication potentially harmful or ineffective, such as allergies or pre-existing medical conditions.
+    // const medicationsResponse = await model.generateContent([medicationsPrompt]);
+    // const medicationsRaw = medicationsResponse.response.text();
+    // const medications = medicationsRaw.split('||').map(item => item.trim()).filter(item => item);
+    // console.log(medications);
+    // const testsPrompt = `Based on this medical conversation transcript: "${transcript}", list all recommended or discussed medical tests, screenings, or diagnostics. Use principles from "The Complete Guide to Prescription and Nonprescription Drugs" to ensure relevant tests are identified. Provide the list in the following format: Each test separated by '||'. Do not include any other text, numbers, or bullet points.`;
 
-###Make sure to return only medication prescription, no other text should be returned.
-###This is an example output: 
-1. Tab Ibuprofen (400mg), take one tablet every 8 hours as needed for pain, after meals
+    // const testsResponse = await model.generateContent([testsPrompt]);
+    // const testsRaw = testsResponse.response.text();
+    // const tests = testsRaw.split('||').map(item => item.trim()).filter(item => item);
+    // console.log(tests);
+    // const differentialPrompt = `Based on this medical conversation transcript: "${transcript}", use step-by-step deduction to create a comprehensive differential diagnosis and determine the most likely condition. Use reasoning methods like clinical reasoning, analytic reasoning, and Bayesian inference with references from "The Complete Guide to Prescription and Nonprescription Drugs" and "The Art of Prescribing." Provide differential diagnoses in the following format: Each diagnosis and rationale separated by '||'. Do not include any other text, numbers, or bullet points.`;
 
-2. Tab Vitamin D3 (1000 IU), once daily with food
+    // const differentialResponse = await model.generateContent([differentialPrompt]);
+    // const differentialRaw = differentialResponse.response.text();
+    // const differential_diagnosis = differentialRaw.split('||').map(item => item.trim()).filter(item => item);
+    // console.log(differential_diagnosis);
+    const dietPrompt = `Based on this detailed medical summary: "${summary}", provide highly specific, evidence-based dietary recommendations that are meticulously tailored to the patient's condition. Consider all aspects of the patient's health, including primary diagnosis, comorbidities, nutritional deficiencies, allergies, and specific dietary restrictions. Use reputable sources such as "Clinical Nutrition in Practice" and "The American Dietetic Association's Complete Food and Nutrition Guide" for recommendations. Provide actionable dietary advice in the following format: Each recommendation separated by '||'. Do not include any other text, disclaimers, numbers, or bullet points.`;
 
-3. X-ray of the lumbar spine to assess any structural issues
+const dietResponse = await model.generateContent([dietPrompt]);
+const dietAdviceRaw = dietResponse.response.text();
+const dietAdvice = dietAdviceRaw.split('||').map(item => item.trim()).filter(item => item);
+// console.log(dietAdvice);
 
-4. MRI of the lumbar spine if X-ray is inconclusive or if symptoms persist
+const lifestylePrompt = `Based on this comprehensive medical summary: "${summary}", provide thoroughly detailed, evidence-based lifestyle modifications tailored to the patient's condition. Address aspects such as daily routines, physical activity, sleep hygiene, stress management, and age-appropriate recommendations. Consider principles from "The Art of Prescribing" and "The Lifestyle Medicine Handbook" to ensure recommendations are practical, actionable, and rooted in evidence. Return all recommendations in the following format: Each recommendation separated by '||'. Do not include any other text, numbers, or bullet points.`;
 
-###Make sure to return only bullet points, and the content in the same format as above example output.
+const lifestyleResponse = await model.generateContent([lifestylePrompt]);
+const lifestyleAdviceRaw = lifestyleResponse.response.text();
+const lifestyleAdvice = lifestyleAdviceRaw.split('||').map(item => item.trim()).filter(item => item);
+// console.log(lifestyleAdvice);
 
+const medicationsPrompt = `Based on this detailed medical summary: "${summary}", create a complete and structured list of medications that were prescribed or discussed. Include all relevant details, ensuring accuracy and precision. Use references from "The Complete Guide to Prescription and Nonprescription Drugs" and "The Sanford Guide to Antimicrobial Therapy" to verify medication information. Provide the list in the following structured format, with each field separated by '||': Medication Name || Dosage Form || Strength || Quantity || Route of Administration || Frequency of Administration || Duration of Treatment. Do not include any other text, disclaimers, numbers, or bullet points.`;
 
-`;
-        const prescriptionsResponse = await model.generateContent([prescriptionsPrompt]);
-        const prescriptions = prescriptionsResponse.response.text();
-        console.log(prescriptions);
-        const advicePrompt = `The following text is a medical summary ${summary} of the patient. You have to give medical advice only to the patient based on summary and prescriptions ${prescriptions}. Based  on medical summary and prescriptions you have to give lifestyle advice to the patient. Based on the data provided, recommend personalized lifestyle advice to address the patient's concerns, improve their health, and support their well-being. Your recommendations should be concise, actionable, and directly relevant to the patient's needs.
-You are tasked with analyzing a transcript of a conversation between a doctor and a patient. Based on the discussion, recommend personalized lifestyle advice to address the patient's concerns, improve their health, and support their well-being. Your recommendations should be concise, actionable, and directly relevant to the patient's needs.
+const medicationsResponse = await model.generateContent([medicationsPrompt]);
+const medicationsRaw = medicationsResponse.response.text();
+const medications = medicationsRaw.split('||').map(item => item.trim()).filter(item => item);
+// console.log(medications);
 
-Output Structure
-Lifestyle Advice
-Provide clear, actionable steps the patient can implement in their daily life.
-Focus on areas such as physical activity, posture, work habits, stress management, and overall wellness.
-Use bullet points for clarity and conciseness.
-Example Output
-Incorporate regular stretching and strengthening exercises for the lower back and core muscles.
-Take frequent breaks from sitting, ideally every 30-60 minutes, to stand or walk around.
-Consider ergonomic adjustments to your workstation to support better posture.
-Engage in 30 minutes of moderate aerobic exercise, such as walking or cycling, at least five times a week.
-Guidelines for Recommendations
-Tailor advice to the patient’s specific concerns, lifestyle, and abilities.
-Keep suggestions practical and easy to implement.
-Focus on improving daily habits and routines.
-References
-Use the following resources for evidence-based lifestyle recommendations:
+const testsPrompt = `Based on this detailed medical summary: "${summary}", identify and list all recommended or discussed medical tests, screenings, or diagnostics. Ensure the tests are relevant to the patient's condition and comorbidities. Use authoritative references like "The Complete Guide to Prescription and Nonprescription Drugs" to provide accurate and comprehensive suggestions. Provide the list in the following format: Each test separated by '||'. Do not include any other text, disclaimers, numbers, or bullet points.`;
 
-The Mayo Clinic Wellness Solutions: Trusted advice on healthy living, including physical activity, stress management, and sleep hygiene.
-Ergonomics and Human Factors by Neville A. Stanton: Guidance on ergonomic adjustments for workplaces.
-The National Institute on Aging (NIA): Recommendations on exercises, healthy eating, and maintaining mobility in older adults.
-The American Heart Association (AHA): Guidelines on physical activity and cardiovascular health.
+const testsResponse = await model.generateContent([testsPrompt]);
+const testsRaw = testsResponse.response.text();
+const tests = testsRaw.split('||').map(item => item.trim()).filter(item => item);
+// console.log(tests);
 
-###Make sure to return only advice, no other text should be returned except advice.`;
-        const adviceResponse = await model.generateContent([advicePrompt]);
-        const advice = adviceResponse.response.text();
-        console.log(advice);
-        // Return processed data directly
-        res.status(200).json({
-            chiefComplaints: complaints || "Not available",
-            summary: summary || "Not available",
-            prescriptions: prescriptions || "Not available",
-            advice: advice || "Not available",
+const differentialPrompt = `Based on this detailed medical summary: "${summary}", generate a step-by-step, evidence-based differential diagnosis. Use advanced reasoning methods such as clinical reasoning, analytic reasoning, and Bayesian inference. Leverage resources like "The Complete Guide to Prescription and Nonprescription Drugs" and "The Art of Prescribing" to ensure accuracy. Include detailed rationales for each diagnosis. Provide the differential diagnoses and rationale in the following format: Each diagnosis and its rationale separated by '||'. Do not include any other text, disclaimers, numbers, or bullet points.`;
+
+const differentialResponse = await model.generateContent([differentialPrompt]);
+const differentialRaw = differentialResponse.response.text();
+const differential_diagnosis = differentialRaw.split('||').map(item => item.trim()).filter(item => item);
+// console.log(differentialDiagnosis);
+
+    res.json({
+            summary,
+            complaints,
+            dietAdvice,
+            lifestyleAdvice,
+            medications,
+            tests,
+            differential_diagnosis
         });
+
     } catch (error) {
-        console.error('Error processing call details:', error.response?.data || error.message);
-        res.status(500).json({ error: 'Failed to process call details' });
+        console.error('Error fetching call data:', error.response?.data || error.message);
+        res.status(500).json({ error: 'Failed to fetch call data' });
     }
 });
 
-// Start the server
 app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
+    console.log(`Server is running on port ${port}`);
 });
