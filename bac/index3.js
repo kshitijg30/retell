@@ -199,7 +199,7 @@ console.log('Processed differential diagnosis:', differentialDiagnosis);
             lifestyleAdvice,
             medications,
             tests,
-            differentialDiagnosis
+           differential_diagnosis
         });
 
     } catch (error) {
