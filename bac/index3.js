@@ -114,40 +114,83 @@ app.get('/get-call/:callId', async (req, res) => {
     // const differentialRaw = differentialResponse.response.text();
     // const differential_diagnosis = differentialRaw.split('||').map(item => item.trim()).filter(item => item);
     // console.log(differential_diagnosis);
-    const dietPrompt = `Based on this detailed medical summary: "${summary}", provide highly specific, evidence-based dietary recommendations that are meticulously tailored to the patient's condition. Consider all aspects of the patient's health, including primary diagnosis, comorbidities, nutritional deficiencies, allergies, and specific dietary restrictions. Use reputable sources such as "Clinical Nutrition in Practice" and "The American Dietetic Association's Complete Food and Nutrition Guide" for recommendations. Provide actionable dietary advice in the following format: Each recommendation separated by '||'. Do not include any other text, disclaimers, numbers, or bullet points.`;
+//     const dietPrompt = `Based on this detailed medical summary: "${summary}", provide highly specific, evidence-based dietary recommendations that are meticulously tailored to the patient's condition. Consider all aspects of the patient's health, including primary diagnosis, comorbidities, nutritional deficiencies, allergies, and specific dietary restrictions. Use reputable sources such as "Clinical Nutrition in Practice" and "The American Dietetic Association's Complete Food and Nutrition Guide" for recommendations. Provide actionable dietary advice in the following format: Each recommendation separated by '||'. Do not include any other text, disclaimers, numbers, or bullet points.`;
 
-const dietResponse = await model.generateContent([dietPrompt]);
-const dietAdviceRaw = dietResponse.response.text();
-const dietAdvice = dietAdviceRaw.split('||').map(item => item.trim()).filter(item => item);
-// console.log(dietAdvice);
+// const dietResponse = await model.generateContent([dietPrompt]);
+// const dietAdviceRaw = dietResponse.response.text();
+// const dietAdvice = dietAdviceRaw.split('||').map(item => item.trim()).filter(item => item);
+// // console.log(dietAdvice);
 
-const lifestylePrompt = `Based on this comprehensive medical summary: "${summary}", provide thoroughly detailed, evidence-based lifestyle modifications tailored to the patient's condition. Address aspects such as daily routines, physical activity, sleep hygiene, stress management, and age-appropriate recommendations. Consider principles from "The Art of Prescribing" and "The Lifestyle Medicine Handbook" to ensure recommendations are practical, actionable, and rooted in evidence. Return all recommendations in the following format: Each recommendation separated by '||'. Do not include any other text, numbers, or bullet points.`;
+// const lifestylePrompt = `Based on this comprehensive medical summary: "${summary}", provide thoroughly detailed, evidence-based lifestyle modifications tailored to the patient's condition. Address aspects such as daily routines, physical activity, sleep hygiene, stress management, and age-appropriate recommendations. Consider principles from "The Art of Prescribing" and "The Lifestyle Medicine Handbook" to ensure recommendations are practical, actionable, and rooted in evidence. Return all recommendations in the following format: Each recommendation separated by '||'. Do not include any other text, numbers, or bullet points.`;
 
-const lifestyleResponse = await model.generateContent([lifestylePrompt]);
-const lifestyleAdviceRaw = lifestyleResponse.response.text();
-const lifestyleAdvice = lifestyleAdviceRaw.split('||').map(item => item.trim()).filter(item => item);
-// console.log(lifestyleAdvice);
+// const lifestyleResponse = await model.generateContent([lifestylePrompt]);
+// const lifestyleAdviceRaw = lifestyleResponse.response.text();
+// const lifestyleAdvice = lifestyleAdviceRaw.split('||').map(item => item.trim()).filter(item => item);
+// // console.log(lifestyleAdvice);
 
-const medicationsPrompt = `Based on this detailed medical summary: "${summary}", create a complete and structured list of medications that were prescribed or discussed. Include all relevant details, ensuring accuracy and precision. Use references from "The Complete Guide to Prescription and Nonprescription Drugs" and "The Sanford Guide to Antimicrobial Therapy" to verify medication information. Provide the list in the following structured format, with each field separated by '||': Medication Name || Dosage Form || Strength || Quantity || Route of Administration || Frequency of Administration || Duration of Treatment. Do not include any other text, disclaimers, numbers, or bullet points.`;
+// const medicationsPrompt = `Based on this detailed medical summary: "${summary}", create a complete and structured list of medications that were prescribed or discussed. Include all relevant details, ensuring accuracy and precision. Use references from "The Complete Guide to Prescription and Nonprescription Drugs" and "The Sanford Guide to Antimicrobial Therapy" to verify medication information. Provide the list in the following structured format, with each field separated by '||': Medication Name || Dosage Form || Strength || Quantity || Route of Administration || Frequency of Administration || Duration of Treatment. Do not include any other text, disclaimers, numbers, or bullet points.`;
 
-const medicationsResponse = await model.generateContent([medicationsPrompt]);
-const medicationsRaw = medicationsResponse.response.text();
-const medications = medicationsRaw.split('||').map(item => item.trim()).filter(item => item);
-// console.log(medications);
+// const medicationsResponse = await model.generateContent([medicationsPrompt]);
+// const medicationsRaw = medicationsResponse.response.text();
+// const medications = medicationsRaw.split('||').map(item => item.trim()).filter(item => item);
+// // console.log(medications);
 
-const testsPrompt = `Based on this detailed medical summary: "${summary}", identify and list all recommended or discussed medical tests, screenings, or diagnostics. Ensure the tests are relevant to the patient's condition and comorbidities. Use authoritative references like "The Complete Guide to Prescription and Nonprescription Drugs" to provide accurate and comprehensive suggestions. Provide the list in the following format: Each test separated by '||'. Do not include any other text, disclaimers, numbers, or bullet points.`;
+// const testsPrompt = `Based on this detailed medical summary: "${summary}", identify and list all recommended or discussed medical tests, screenings, or diagnostics. Ensure the tests are relevant to the patient's condition and comorbidities. Use authoritative references like "The Complete Guide to Prescription and Nonprescription Drugs" to provide accurate and comprehensive suggestions. Provide the list in the following format: Each test separated by '||'. Do not include any other text, disclaimers, numbers, or bullet points.`;
 
-const testsResponse = await model.generateContent([testsPrompt]);
-const testsRaw = testsResponse.response.text();
-const tests = testsRaw.split('||').map(item => item.trim()).filter(item => item);
-// console.log(tests);
+// const testsResponse = await model.generateContent([testsPrompt]);
+// const testsRaw = testsResponse.response.text();
+// const tests = testsRaw.split('||').map(item => item.trim()).filter(item => item);
+// // console.log(tests);
 
-const differentialPrompt = `Based on this detailed medical summary: "${summary}", generate a step-by-step, evidence-based differential diagnosis. Use advanced reasoning methods such as clinical reasoning, analytic reasoning, and Bayesian inference. Leverage resources like "The Complete Guide to Prescription and Nonprescription Drugs" and "The Art of Prescribing" to ensure accuracy. Include detailed rationales for each diagnosis. Provide the differential diagnoses and rationale in the following format: Each diagnosis and its rationale separated by '||'. Do not include any other text, disclaimers, numbers, or bullet points.`;
+// const differentialPrompt = `Based on this detailed medical summary: "${summary}", generate a step-by-step, evidence-based differential diagnosis. Use advanced reasoning methods such as clinical reasoning, analytic reasoning, and Bayesian inference. Leverage resources like "The Complete Guide to Prescription and Nonprescription Drugs" and "The Art of Prescribing" to ensure accuracy. Include detailed rationales for each diagnosis. Provide the differential diagnoses and rationale in the following format: Each diagnosis and its rationale separated by '||'. Do not include any other text, disclaimers, numbers, or bullet points.`;
 
-const differentialResponse = await model.generateContent([differentialPrompt]);
-const differentialRaw = differentialResponse.response.text();
-const differential_diagnosis = differentialRaw.split('||').map(item => item.trim()).filter(item => item);
+// const differentialResponse = await model.generateContent([differentialPrompt]);
+// const differentialRaw = differentialResponse.response.text();
+// const differential_diagnosis = differentialRaw.split('||').map(item => item.trim()).filter(item => item);
 // console.log(differentialDiagnosis);
+        const dietAdviceRaw = response.data.call_analysis.custom_analysis_data.diet;
+const dietAdvice = Array.isArray(dietAdviceRaw) 
+    ? dietAdviceRaw.flatMap(advice => advice.split('||').map(item => item.trim()))
+    : dietAdviceRaw
+        ? dietAdviceRaw.split('||').map(item => item.trim())
+        : [];
+console.log('Processed diet advice:', dietAdvice);
+
+// Process lifestyle advice
+const lifestyleAdviceRaw = response.data.call_analysis.custom_analysis_data.life;
+const lifestyleAdvice = Array.isArray(lifestyleAdviceRaw) 
+    ? lifestyleAdviceRaw.flatMap(advice => advice.split('||').map(item => item.trim()))
+    : lifestyleAdviceRaw
+        ? lifestyleAdviceRaw.split('||').map(item => item.trim())
+        : [];
+console.log('Processed lifestyle advice:', lifestyleAdvice);
+
+// Process medications
+const medicationsRaw = response.data.call_analysis.custom_analysis_data.medications;
+const medications = Array.isArray(medicationsRaw) 
+    ? medicationsRaw.flatMap(medication => medication.split('||').map(item => item.trim()))
+    : medicationsRaw
+        ? medicationsRaw.split('||').map(item => item.trim())
+        : [];
+console.log('Processed medications:', medications);
+
+// Process tests
+const testsRaw = response.data.call_analysis.custom_analysis_data.tests;
+const tests = Array.isArray(testsRaw) 
+    ? testsRaw.flatMap(test => test.split('||').map(item => item.trim()))
+    : testsRaw
+        ? testsRaw.split('||').map(item => item.trim())
+        : [];
+console.log('Processed tests:', tests);
+
+// Process differential diagnosis
+const differentialRaw = response.data.call_analysis.custom_analysis_data.diag;
+const differentialDiagnosis = Array.isArray(differentialRaw) 
+    ? differentialRaw.flatMap(diagnosis => diagnosis.split('||').map(item => item.trim()))
+    : differentialRaw
+        ? differentialRaw.split('||').map(item => item.trim())
+        : [];
+console.log('Processed differential diagnosis:', differentialDiagnosis);
 
     res.json({
             summary,
@@ -156,7 +199,7 @@ const differential_diagnosis = differentialRaw.split('||').map(item => item.trim
             lifestyleAdvice,
             medications,
             tests,
-            differential_diagnosis
+            differentialDiagnosis
         });
 
     } catch (error) {
