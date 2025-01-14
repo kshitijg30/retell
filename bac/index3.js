@@ -191,7 +191,7 @@ const differential_diagnosis = Array.isArray(differentialRaw)
     : differentialRaw
         ? differentialRaw.split('||').map(item => item.trim())
         : [];
-console.log('Processed differential diagnosis:', differentialDiagnosis);
+
 
     res.json({
             summary,
