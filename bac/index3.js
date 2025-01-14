@@ -185,7 +185,7 @@ console.log('Processed tests:', tests);
 
 // Process differential diagnosis
 const differentialRaw = response.data.call_analysis.custom_analysis_data.diag;
-const differentialDiagnosis = Array.isArray(differentialRaw) 
+const differential_diagnosis = Array.isArray(differentialRaw) 
     ? differentialRaw.flatMap(diagnosis => diagnosis.split('||').map(item => item.trim()))
     : differentialRaw
         ? differentialRaw.split('||').map(item => item.trim())
