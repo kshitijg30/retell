@@ -72,6 +72,7 @@ app.get('/get-call/:callId', async (req, res) => {
 
         // Get summary and complaints from custom analysis data
         const summary = response.data.call_analysis.custom_analysis_data.summary;
+        console.log(response.data.call_analysis.custom_analysis_data);
         const complaintsRaw = response.data.call_analysis.custom_analysis_data.complaints;
         
         // Convert complaints to array and split by ||
